@@ -1,0 +1,7 @@
+logs/
+output/
+input/
+*.xlsx
+venv/
+__pychache__/
+chromedriver

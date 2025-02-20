@@ -1,0 +1,79 @@
+#!/bin/bash
+#
+# ##########################################################
+# Shell script to call Click IronCare Report Engine Script
+#
+# allows for --tag to be entered to change docker hub image
+#
+# ##########################################################
+#
+# Define default variables
+#
+
+
+image_name="ironbow/ucreport"
+tag_name="latest"
+script_name="clickreport.py"
+#
+input_dir="input"
+output_dir="output"
+log_dir="logs"
+docker_args=""
+#all_args=$@
+
+#
+# ##########################################################
+#
+# Parse through parameters and pull out what is needed for this script
+# Pass on variables needed by docker
+#
+while [[ "$#" -gt 0 ]]; do
+	case $1 in
+		# process parameters that are only for this script (do not send to docker)
+		--tag)      tag_name="$2"; shift ;;
+
+        # then parse parameters for this script that should also go to docker
+		--indir)    input_dir="$2"; docker_args+="$1 $2"; shift 2 ;;
+		--outdir)   output_dir="$2"; docker_args+="$1 $2"; shift 2 ;;
+		--logdir)   log_dir="$2"; docker_args+="$1 $2"; shift 2 ;;
+
+        # Assuming anything else should go to docker
+		*)          docker_args+="$1 "; shift ;;
+	esac
+done
+
+#
+# ##########################################################
+#
+# Finalize variable construction before calling docker
+#
+
+# construct docker image name
+if [[ $tag_name == "" ]]
+then
+	full_image_name="$image_name"
+else
+	full_image_name="$image_name:$tag_name"
+fi
+
+input_path="$(pwd)/$input_dir"
+output_path="$(pwd)/$output_dir"
+log_path="$(pwd)/$log_dir"
+
+#echo input_path:   $input_path"
+#echo output_path:  $output_path"
+#echo log_path:     $log_path"
+#echo full_image:   $full_image_name"
+#echo "all_args:    $all_args"
+#echo "docker_args: $docker_args"
+
+#
+# ##########################################################
+#
+# Construct the docker command and run
+#
+
+docker_command="docker run -v \"$input_path\":/app/$input_dir -v \"$output_path\":/app/$output_dir -v \"$log_path\":/app/$log_dir -it --rm $full_image_name python $script_name $docker_args"
+
+#echo $docker_command
+eval $docker_command
